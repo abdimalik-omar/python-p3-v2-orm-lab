@@ -119,8 +119,7 @@ class TestReview:
                 (review.id, 2023, "Excellent Python skills!", employee.id))
 
     def test_instance_from_db(self):
-        '''contains method "instance_from_db()" that takes a db row and creates an Review instance.'''
-
+        """Contains method 'instance_from_db()' that takes a db row and creates a Review instance."""
         Department.create_table()
         department = Department.create("Payroll", "Building A, 5th Floor")
 
@@ -128,21 +127,33 @@ class TestReview:
         employee = Employee.create("Raha", "Accountant", department.id)
 
         Review.create_table()
+        Review.all = {}  # Clear cache before test
         sql = """
             INSERT INTO reviews (year, summary, employee_id)
             VALUES (2022, 'Amazing coder!', ?)
         """
         CURSOR.execute(sql, (employee.id,))
 
-        sql = """
-            SELECT * FROM reviews
-        """
-        row = CURSOR.execute(sql).fetchone()
+        # Verify data in the database
+        sql = "SELECT * FROM reviews"
+        rows = CURSOR.execute(sql).fetchall()
+        print(f"All rows in reviews table: {rows}")
+
+        # Retrieve the first row and create an instance
+        row = CURSOR.execute("SELECT * FROM reviews").fetchone()
+        print(f"Row fetched for instance creation: {row}")
 
         review = Review.instance_from_db(row)
-        assert ((row[0], row[1], row[2], row[3]) ==
-                (review.id, review.year, review.summary, review.employee_id) ==
-                (review.id, 2022, "Amazing coder!", employee.id))
+
+        # Debugging outputs
+        print(f"Created Review instance: ID={review.id}, Year={review.year}, Summary={review.summary}, Employee ID={review.employee_id}")
+
+        # Assertions
+        assert row[1] == 2022, f"Expected year 2022 in DB row, got {row[1]}"
+        assert review.year == 2022, f"Expected review.year to be 2022, got {review.year}"
+        assert (row[0], row[1], row[2], row[3]) == (review.id, review.year, review.summary, review.employee_id)
+        assert (review.id, review.year, review.summary, review.employee_id) == (review.id, 2022, "Amazing coder!", employee.id)
+
 
     def test_finds_by_id(self):
         '''contains method "find_by_id()" that returns a Review instance corresponding to its db row retrieved by id.'''
